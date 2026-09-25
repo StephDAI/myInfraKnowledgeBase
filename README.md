@@ -11,6 +11,7 @@
 | [07 互连与网络技术](./07_互连与网络技术.md) | PCIe/NVLink、RDMA/IBGDA/RoCEv2/DCQCN、NVSHMEM、ACE/TME/TMA、MUSA vs CUDA |
 | [08 DeepEP 与 MoE 通信算子](./08_DeepEP与MoE通信算子.md) | DeepEP 架构、normal vs low-latency、notify、dispatch/combine、0804 缓存优化、源码结构 |
 | [09 调优案例复盘](./09_调优案例复盘.md) | H20 DS V4、8×H20 all-reduce skew、S5000 GLM5.1、mpirun EAGAIN |
-| [10 训练基础](./10_训练基础.md) | 混合精度训练（FP16 计算 / FP32 主参数）、参数·梯度·优化器状态流转、DP + ZeRO 分片 |
+| [10 训练基础](./10_训练基础.md) | 混合精度训练（FP16 计算 / FP32 主参数）、参数·梯度·优化器状态流转、DP + ZeRO 分片、前向/反向 FLOPs |
+| [11 训练框架与预训练](./11_训练框架与预训练.md) | 迁移学习、预训练与 Megatron-LM、PetaFLOPs |
 
 ---
