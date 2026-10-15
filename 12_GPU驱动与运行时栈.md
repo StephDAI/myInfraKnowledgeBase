@@ -51,11 +51,11 @@ GSP 固件异常常被列为需求之一（「驱动 hang、CUDA context 卡死�
 把上面全串起来，这张图把「驱动」到底横跨哪些缝画清楚了：
 
 ```
-Python (PyTorch)
+Python (PyTorch)                          ← L0 应用/框架层
   │
 libtorch
   │
-libcudart.so   cudaLaunchKernel()          ← L0 应用/框架层
+libcudart.so   cudaLaunchKernel()          
   │
 libcuda.so     cuLaunchKernel() / PTX JIT  ← L1 宿主库边界（uprobe 热点）
   │                                            ★ 驱动在这里有「用户态那一半」
@@ -129,22 +129,35 @@ CUDA C++  →  PTX（文本 IR）  →  SASS（机器码，绑架构）
 | **② 登记期** | **CUDA Runtime**（`libcudart`，通常静态链进你的库） | 库被加载时（程序启动或 `dlopen`）**静态初始化器**逐个调用 `__cudaRegisterFatBinary()` → runtime **记录**这个映像；每个 `__global__` 再调 `__cudaRegisterFunction()` 建立 host stub ↔ device function 映射 | ❌ **只是记账** |
 | **③ 加载期** | **CUDA Driver**（`libcuda.so`） | 首次使用该 kernel 时，驱动从 fatbin 里**挑最合适的一份**（匹配的 cubin，或 JIT PTX）→ 创建 **module 对象**（占显存、建页表）→ 得到 function handle | ✅ **真正上 GPU** |
 
-### 5.2 一次 kernel launch 的完整走位（Runtime/Driver 交界）
+> 「登记 / 首次 launch / 稳态 launch」是**三条不同时间线**，下面分开画：§5.2 只登记（库加载时），§5.3 是首次 launch（含真正的 lazy 加载），§5.4 是之后每次 launch。
+
+### 5.2 登记期走位（库加载时，只记账、不碰 GPU）
 
 ```
-kernel<<<...>>>()                         ← 你写的东西（host stub）
+my_kernel<<<...>>>()                       ← 你写的东西（host stub 已在编译期生成）
+  │
+libcudart.so（CUDA Runtime）· 静态初始化器（程序启动 / dlopen 时跑）
+  │   ├─ __cudaRegisterFatBinary(&fatbin_wrapper)
+  │   │      └─ runtime 登记映像（不加载！只记账）
+  │   └─ __cudaRegisterFunction(handle, "my_kernel", ...)
+  │          └─ 建立 host stub ↔ device function 映射
+  │
+  ✗ 到此为止：只填表，连 libcuda 都没进
+```
+
+### 5.3 首次 launch 走位（含 lazy 加载，Runtime/Driver 交界）
+
+```
+my_kernel<<<...>>>()                       ← host stub 被调用
   │
 libcudart.so（CUDA Runtime）
-  │   ├─ [库加载时·静态初始化] __cudaRegisterFatBinary(&fatbin_wrapper)
-  │   │      └─ runtime 登记映像（不加载！只记账）
-  │   ├─ [库加载时] __cudaRegisterFunction(handle, "my_kernel", ...)
-  │   │      └─ 建立 host stub ↔ device function 映射
-  │   └─ [首次 launch 时·LAZY] 内部请求驱动创建 module   ★ 真正的加载点
+  │   └─ cudaLaunchKernel(...)             ← 拿 host stub 地址查 §5.2 登记表
+  │          └─ [首次·LAZY] 内部请求驱动创建 module   ★ 真正的加载点
   │
 ═══ Runtime / Driver 的交界 ═══
   │
 libcuda.so（CUDA Driver）
-  │   ├─ cuModuleLoad*        ← 用 fatbin/cubin/PTX 字节创建 module
+  │   ├─ cuModuleLoad*        ← 用 fatbin/cubin/PTX 字节创建 module（占显存 / 建页表）
   │   ├─ cuModuleGetFunction  ← 取 CUfunction（注意：它本身也会触发加载，见 §6）
   │   └─ cuLaunchKernel       ← launch
   │
@@ -152,6 +165,22 @@ libcuda.so（CUDA Driver）
   │
 nvidia.ko + nvidia-uvm.ko → 命令队列/工作描述符 → GPU
 ```
+
+### 5.4 稳态 launch 走位（第 N 次，N ≥ 2）
+
+```
+my_kernel<<<...>>>()
+  │
+libcudart.so  cudaLaunchKernel()   ← 查表：module handle / CUfunction 已缓存，不再 load
+  │
+libcuda.so    cuLaunchKernel()     ← 直接拿已有 CUfunction 下发
+  │
+═══ ioctl / mmap on /dev/nvidia* ═══
+  │
+nvidia.ko + nvidia-uvm.ko → 命令队列/工作描述符 → GPU
+```
+
+（相比 §5.3，稳态这条**没有 `__cudaRegister*`，没有 `cuModuleLoad`，也没有 `cuModuleGetFunction`**。）
 
 ---
 
