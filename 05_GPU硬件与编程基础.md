@@ -59,8 +59,10 @@ L2 Cache：整个 GPU 跨 SM 共享
 每个 SM 内部：
     L1 Cache / Texture Cache / Shared Memory
     ↓
-Register File：每个线程使用
+    Register File：每个线程使用
 ```
+
+> 主机侧内存可通过 **CXL** 扩展为「本地 DRAM + CXL 附加内存」的分层结构（容量更大、延迟更高、带宽更低），见 [07 §1.1](./07_互连与网络技术.md)。
 
 ### 2.2 CUDA 编程模型里的 memory spaces
 

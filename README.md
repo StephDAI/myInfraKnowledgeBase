@@ -8,11 +8,11 @@
 | [04 性能分析方法论](./04_性能分析方法论.md) | 指标、profiling 工具、compute/memory-bound、并发扫描、屋顶模型、wall clock、重用距离 |
 | [05 GPU 硬件与编程基础](./05_GPU硬件与编程基础.md) | 执行层级、内存层级、SIMT、访存合并/发散、stream、TMA、DMA、MPS/MIG |
 | [06 分布式并行](./06_分布式并行.md) | DP/SP/CP/TP/PP、EP、scale-up/out、集合通信、tp/ep/dp 公式 |
-| [07 互连与网络技术](./07_互连与网络技术.md) | PCIe/NVLink、RDMA/IBGDA/RoCEv2/DCQCN、RDMA verbs、NVSHMEM、ACE/TME/TMA、MUSA vs CUDA |
+| [07 互连与网络技术](./07_互连与网络技术.md) | PCIe/NVLink/CXL、RDMA/IBGDA/RoCEv2/DCQCN、RDMA verbs、NVSHMEM、ACE/TME/TMA、MUSA vs CUDA、scale-up/out 可观测性 |
 | [08 DeepEP 与 MoE 通信算子](./08_DeepEP与MoE通信算子.md) | DeepEP 架构、normal vs low-latency、notify、dispatch/combine、0804 缓存优化、源码结构 |
 | [09 调优案例复盘](./09_调优案例复盘.md) | H20 DS V4、8×H20 all-reduce skew、S5000 GLM5.1、mpirun EAGAIN |
 | [10 训练基础](./10_训练基础.md) | 混合精度训练（FP16 计算 / FP32 主参数）、参数·梯度·优化器状态流转、DP + ZeRO 分片、前向/反向 FLOPs |
 | [11 训练框架与预训练](./11_训练框架与预训练.md) | 迁移学习、预训练与 Megatron-LM、PetaFLOPs |
-| [12 GPU 驱动与运行时栈](./12_GPU驱动与运行时栈.md) | 内核态/用户态驱动、GSP 固件、kernel launch 走位、FatBinary、登记 vs 加载、lazy loading、LD_PRELOAD |
+| [12 GPU 软件栈与算子执行](./12_GPU软件栈与算子执行.md) | ATen 算子 dispatch（DispatchKey/redispatch）、内核态/用户态驱动、GSP 固件、kernel launch 走位、FatBinary、登记 vs 加载、lazy loading、LD_PRELOAD |
 
 ---
